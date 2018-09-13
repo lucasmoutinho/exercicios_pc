@@ -24,8 +24,7 @@ GORILAO QUER ATRAVESSAR A PONTE; QUANDO ELE FOR ATRAVESSAR, TODOS PARAM
 pthread_mutex_t turno = PTHREAD_MUTEX_INITIALIZER;  /* lock pro contador*/
 pthread_mutex_t lock_a = PTHREAD_MUTEX_INITIALIZER; /* lock pra que macacos A não atravessem a corda*/
 pthread_mutex_t lock_b = PTHREAD_MUTEX_INITIALIZER; /* lock pra que macacos B não atravessem a corda*/
-pthread_mutex_t lock_g = PTHREAD_MUTEX_INITIALIZER; /* lock pra que apenas o gorila atravesse*/
-int a = 0, b = 0, g = 0;                                   /* numero de macacos atravessando a corda*/
+int a = 0, b = 0;                                   /* numero de macacos atravessando a corda*/
 
 void *travessia_leste(void *arg)
 {
@@ -101,29 +100,12 @@ void *travessia_gorila(void *arg)
 
   while(TRUE){
     pthread_mutex_lock(&turno);
-    pthread_mutex_lock(&lock_g);
 
-    g++;
-    if(g == 1){
-      pthread_mutex_lock(&lock_a);
-      pthread_mutex_lock(&lock_b);
-    }
-
-    pthread_mutex_unlock(&lock_g);
-    pthread_mutex_unlock(&turno);
-
-    printf("GORILÃO:%d -- ATRAVESSANDO A PONTE\n", id);
+    printf("\nGORILÃO:%d -- ATRAVESSANDO A PONTE\n", id);
     sleep(2);
+    printf("GORILÃO:%d -- CHEGOU DO OUTRO LADO DA PONTE\n\n", id);
 
-    pthread_mutex_lock(&lock_g);
-    g--;
-    printf("GORILÃO:%d -- ATRAVESSOU A PONTE -- RESTANTES:%d\n", id, g);
-    if(g == 0){
-      pthread_mutex_unlock(&lock_a);
-      pthread_mutex_unlock(&lock_b);
-      printf("\n\n");
-    }
-    pthread_mutex_unlock(&lock_g);
+    pthread_mutex_unlock(&turno);
     sleep(5);
   }
   pthread_exit(0);
