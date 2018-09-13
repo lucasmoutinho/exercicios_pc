@@ -71,7 +71,7 @@ void *cozinhando(void *arg){
 
     printf("\nCanibais estão sem comida...\nCozinheiro %d indo preparar porções...\n", id);
     sleep(10);
-    comida += 15;
+    comida += 25;
     printf("Cozinheiro %d preparou %d porções de comida pros canibais laricados\n",id, comida);
     printf("\n");
     pthread_cond_broadcast(&ca);
