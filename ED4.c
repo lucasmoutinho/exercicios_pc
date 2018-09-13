@@ -53,6 +53,7 @@ COZINHEIRO {1}{
 #define TRUE 1
 #define COZINHEIRO 1
 #define CANIBAIS 20
+#define PANELA 25
 
 pthread_mutex_t l = PTHREAD_MUTEX_INITIALIZER; /* lock pro contador*/
 pthread_cond_t co = PTHREAD_COND_INITIALIZER; 
@@ -71,7 +72,7 @@ void *cozinhando(void *arg){
 
     printf("\nCanibais estão sem comida...\nCozinheiro %d indo preparar porções...\n", id);
     sleep(10);
-    comida += 25;
+    comida += PANELA;
     printf("Cozinheiro %d preparou %d porções de comida pros canibais laricados\n",id, comida);
     printf("\n");
     pthread_cond_broadcast(&ca);
