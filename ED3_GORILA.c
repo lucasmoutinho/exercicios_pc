@@ -1,147 +1,136 @@
-/*
-
-ALUNO: LUCAS DA SILVA MOUTINHO - 15/0015747
-PROFESSOR: ALCHIERI
-ESTUDO DIRIGIDO 3 - PROGRAMAÇÃO CONCORRENTE - 2/2018
-PROBLEMA DOS MACACOS - VÁRIOS MACACOS QUEREM ATRAVESSAR A CORDA, MACACOS DA ILHA A QUEREM IR PRA B E VICE-VERSA.
-NÃO PODEM HAVER MACACOS ANDANDO EM DIREÇÕES OPOSTAS, PORÉM, VÁRIOS MACACOS DA MESMA ILHA PODEM ATRAVESSAR AO MESMO TEMPO.
-MACACOS A QUEREM IR AO LESTE EM DIREÇÃO A ILHA B
-MACACOS B QUEREM IR AO OESTE EM DIREÇÃO A ILHA A
-
-GORILAO QUER ATRAVESSAR A PONTE; QUANDO ELE FOR ATRAVESSAR, TODOS PARAM
-*/
-
-#include <stdio.h>
 #include <pthread.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#define TRUE 1
-#define MACACOS_A 5
-#define MACACOS_B 5
-#define GORILA 3
+#define QTD_MACACOS_A 15
+#define QTD_MACACOS_B 15
+#define QTD_GORILAS 1
+#define VERDADEIRO 1
 
-pthread_mutex_t turno = PTHREAD_MUTEX_INITIALIZER;  /* lock pro contador*/
-pthread_mutex_t lock_a = PTHREAD_MUTEX_INITIALIZER; /* lock pra que macacos A não atravessem a corda*/
-pthread_mutex_t lock_b = PTHREAD_MUTEX_INITIALIZER; /* lock pra que macacos B não atravessem a corda*/
-int a = 0, b = 0;                                   /* numero de macacos atravessando a corda*/
+pthread_mutex_t gorila_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t monkey_a_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t monkey_b_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t turno = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t entrada = PTHREAD_MUTEX_INITIALIZER;
 
-void *travessia_leste(void *arg)
-{
-  int id = *((int *)arg);
+int qtd_a = 0;
+int qtd_b = 0;
+int qtd_g = 0;
 
-  while (TRUE)
-  {
-    pthread_mutex_lock(&turno);
-    pthread_mutex_lock(&lock_a);
-    a++;
-    if (a == 1)
-    {
-      pthread_mutex_lock(&lock_b);
+void * lado_gorila(void * id){
+    int i = *((int *) id);
+    while(VERDADEIRO){
+        printf("Gorila chegou\n");
+        pthread_mutex_lock(&turno);
+        pthread_mutex_lock(&entrada);
+        qtd_g++;
+        printf("Gorila %d passando...\n",i);
+        sleep(5);
+        qtd_g--;
+        printf("Gorila %d passou!!!! Restam %d\n",i,qtd_g);
+        pthread_mutex_unlock(&entrada);
+        pthread_mutex_unlock(&turno);
+        printf("\n\n");
+        sleep(5);
     }
-    pthread_mutex_unlock(&lock_a);
-    pthread_mutex_unlock(&turno);
-
-    printf("MACACÃO A:%d -- SAINDO DA ILHA A NA DIREÇÃO LESTE\n", id);
-    sleep(2);
-
-    pthread_mutex_lock(&lock_a);
-    a--;
-    printf("MACACÃO A:%d -- CHEGOU NA ILHA B PELA DIREÇÃO LESTE -- RESTANTES:%d\n", id, a);
-    if (a == 0)
-    {
-      pthread_mutex_unlock(&lock_b);
-      printf("\n\n");
-    }
-    pthread_mutex_unlock(&lock_a);
-    sleep(1);
-  }
-
-  pthread_exit(0);
 }
 
-void *travessia_oeste(void *arg)
-{
-  int id = *((int *)arg);
-
-  while (TRUE)
-  {
-    pthread_mutex_lock(&turno);
-    pthread_mutex_lock(&lock_b);
-    b++;
-    if (b == 1)
-    {
-      pthread_mutex_lock(&lock_a);
+void * lado_a(void * id){
+    int i = *((int *) id);
+    while(VERDADEIRO){
+        pthread_mutex_lock(&turno);
+        pthread_mutex_lock(&monkey_a_lock);
+        qtd_a++;
+        if(qtd_a == 1){
+            pthread_mutex_lock(&entrada);
+        }
+        printf("Macaco_a %d passando...\n",i);
+        pthread_mutex_unlock(&monkey_a_lock);
+        pthread_mutex_unlock(&turno);
+        sleep(2);
+        pthread_mutex_lock(&monkey_a_lock);
+        qtd_a--;
+        printf("Macaco_a %d passou caralhooo!! Ainda faltam %d\n",i,qtd_a);
+        if(qtd_a == 0){
+            pthread_mutex_unlock(&entrada);
+            printf("\n\n");
+        }
+        pthread_mutex_unlock(&monkey_a_lock);
+        sleep(rand()%10);
     }
-    pthread_mutex_unlock(&lock_b);
-    pthread_mutex_unlock(&turno);
-
-    printf("MACACÃO B:%d -- SAINDO DA ILHA B NA DIREÇÃO OESTE\n", id);
-    sleep(2);
-
-    pthread_mutex_lock(&lock_b);
-    b--;
-    printf("MACACÃO B:%d -- CHEGOU NA ILHA A PELA DIREÇÃO OESTE -- RESTANTES:%d\n", id, b);
-    if (b == 0)
-    {
-      pthread_mutex_unlock(&lock_a);
-      printf("\n\n");
-    }
-    pthread_mutex_unlock(&lock_b);
-    sleep(1);
-  }
-
-  pthread_exit(0);
 }
 
-void *travessia_gorila(void *arg)
-{
-  int id = *((int *)arg);
-
-  while(TRUE){
-    pthread_mutex_lock(&turno);
-
-    printf("\nGORILÃO:%d -- ATRAVESSANDO A PONTE\n", id);
-    sleep(2);
-    printf("GORILÃO:%d -- CHEGOU DO OUTRO LADO DA PONTE\n\n", id);
-
-    pthread_mutex_unlock(&turno);
-    sleep(5);
-  }
-  pthread_exit(0);
+void * lado_b(void * id){
+    int i = *((int *) id);
+    while(VERDADEIRO){
+        pthread_mutex_lock(&turno);
+        pthread_mutex_lock(&monkey_b_lock);
+        qtd_b++;
+        if(qtd_b == 1){
+            pthread_mutex_lock(&entrada);
+        }
+        printf("Macaco_b %d passando...\n",i);
+        pthread_mutex_unlock(&monkey_b_lock);
+        pthread_mutex_unlock(&turno);
+        sleep(2);
+        pthread_mutex_lock(&monkey_b_lock);
+        qtd_b--;
+        printf("Macaco_b %d passou caralhooo!! Ainda faltam %d\n",i,qtd_b);
+        if(qtd_b == 0){
+            pthread_mutex_unlock(&entrada);
+            printf("\n\n");
+        }
+        pthread_mutex_unlock(&monkey_b_lock);
+        sleep(rand()%10);
+    }
 }
 
-int main()
-{
+int main(){
+    pthread_t monkey_a[QTD_MACACOS_A], monkey_b[QTD_MACACOS_B], gorilas[QTD_GORILAS];
+    int i, *cont;
 
-  pthread_t a[MACACOS_A], b[MACACOS_B], g[GORILA];
-  int i;
-  int *id;
+    for(i=0;i<QTD_GORILAS;i++){
+        cont = (int*) malloc(sizeof(int));
+        *cont = i;
+        pthread_create(&gorilas[i],NULL,&lado_gorila,(void*)cont);
+    }
 
-  for (i = 0; i < MACACOS_A; i++)
-  {
-    id = (int *)malloc(sizeof(int));
-    *id = i;
-    pthread_create(&a[i], NULL, travessia_leste, (void *)(id));
-  }
+    for(i=0;i<QTD_MACACOS_A;i++){
+        cont = (int*) malloc(sizeof(int));
+        *cont = i;
+        pthread_create(&monkey_a[i],NULL,&lado_a,(void*)cont);
+    }
 
-  for (i = 0; i < MACACOS_B; i++)
-  {
-    id = (int *)malloc(sizeof(int));
-    *id = i;
-    pthread_create(&b[i], NULL, travessia_oeste, (void *)(id));
-  }
+    for(i=0;i<QTD_MACACOS_B;i++){
+        cont = (int*) malloc(sizeof(int));
+        *cont = i;
+        pthread_create(&monkey_b[i],NULL,&lado_b,(void*)cont);
+    }
 
-  for (i = 0; i < GORILA; i++)
-  {
-    id = (int *)malloc(sizeof(int));
-    *id = i;
-    pthread_create(&g[i], NULL, travessia_gorila, (void *)(id));
-  }
+    for(i = 0; i < QTD_GORILAS; i++){
+        if(pthread_join(gorilas[i], NULL))
+        {
+            printf("Could not join thread %d\n", i);
+            return -1;
+        }
+    }
+    for(i = 0; i < QTD_MACACOS_A; i++){
+        if(pthread_join(monkey_a[i], NULL))
+        {
+            printf("Could not join thread %d\n", i);
+            return -1;
+        }
+    }
 
-  pthread_join(a[0], NULL);
-  pthread_join(b[0], NULL);
-  pthread_join(g[0], NULL);
-
-  return 0;
+    for(i = 0; i < QTD_MACACOS_B; i++){
+        if(pthread_join(monkey_b[i], NULL))
+        {
+            printf("Could not join thread %d\n", i);
+            return -1;
+        }
+    }
+   
+   
+    return 0;
 }
