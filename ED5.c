@@ -15,29 +15,33 @@ O TEMPO PRA PRODUZIR E CONSUMIR UM INTEIRO PODE SER UM SLEEP
 #include <unistd.h>
 
 #define TRUE 1
-#define PRODUTOR 1
-#define CONSUMIDOR 1
-#define TAMANHO 5 
+#define PRODUTOR 10
+#define CONSUMIDOR 10
+#define TAMANHO 5
 
 pthread_mutex_t l = PTHREAD_MUTEX_INITIALIZER; /* lock pro contador*/
-pthread_cond_t cp = PTHREAD_COND_INITIALIZER; /*condicional do produtor*/
-pthread_cond_t cc = PTHREAD_COND_INITIALIZER; /*condicional do consumidor*/
+pthread_cond_t cp = PTHREAD_COND_INITIALIZER;  /*condicional do produtor*/
+pthread_cond_t cc = PTHREAD_COND_INITIALIZER;  /*condicional do consumidor*/
 int count = 0;
 int item = 0;
 int buffer[TAMANHO];
 
-void inicializaBuffer(){
+void inicializaBuffer()
+{
   int i = 0;
-  for(i = 0; i < TAMANHO; i++){
+  for (i = 0; i < TAMANHO; i++)
+  {
     buffer[i] = -1;
   }
 }
 
-void showBuffer(){
+void showBuffer()
+{
   int i = 0;
   printf("-------------------\n");
   printf("BUFFER: ");
-  while (i < TAMANHO && buffer[i] != -1){
+  while (i < TAMANHO && buffer[i] != -1)
+  {
     printf("%d ", buffer[i]);
     i++;
   }
@@ -53,7 +57,8 @@ void *produzindo(void *arg)
     pthread_mutex_lock(&l);
     item = (rand() % 10);
 
-    while (count == TAMANHO){
+    while (count == TAMANHO)
+    {
       printf("Produtor %d: O Buffer está cheio, irei dormir\n\n", id);
       pthread_cond_wait(&cp, &l);
     }
@@ -64,14 +69,15 @@ void *produzindo(void *arg)
     count++;
     showBuffer();
 
-    if(count == 1){
+    if (count == 1)
+    {
       printf("Produtor %d: Comecei a encher o buffer, acordando o consumidor\n\n", id);
-      pthread_cond_signal(&cc);
+      pthread_cond_broadcast(&cc);
     }
-    
+
     pthread_mutex_unlock(&l);
     printf("\n");
-    sleep(1);
+    sleep(rand() % 10);
   }
   pthread_exit(0);
 }
@@ -100,12 +106,12 @@ void *consumindo(void *arg)
     if (count == TAMANHO - 1)
     {
       printf("Consumidor %d: Buffer não está mais lotado, acordando o produtor\n\n", id);
-      pthread_cond_signal(&cp);
+      pthread_cond_broadcast(&cp);
     }
 
     pthread_mutex_unlock(&l);
     printf("\n");
-    sleep(1);
+    sleep(rand() % 10);
   }
   pthread_exit(0);
 }
@@ -116,7 +122,7 @@ int main()
   pthread_t produtor[PRODUTOR], consumidor[CONSUMIDOR];
   int i;
   int *id;
- 
+
   inicializaBuffer();
 
   for (i = 0; i < PRODUTOR; i++)
