@@ -27,6 +27,8 @@ pthread_cond_t cf = PTHREAD_COND_INITIALIZER;
 pthread_cond_t ca = PTHREAD_COND_INITIALIZER;
 
 int vagas = 0;
+int professores_esperando = 0;
+int funcionarios_esperando = 0;
 
 void *vaga_professor(void *id)
 {
@@ -35,10 +37,12 @@ void *vaga_professor(void *id)
   
   while(TRUE){
     pthread_mutex_lock(&turno);
+    professores_esperando++;
     while(vagas == QTD_ESTACIONAMENTO){
       printf("Estacionamento lotado -- Professor %d na fila do estacionamento...\n", i);
       pthread_cond_wait(&cp, &turno);
     }
+    professores_esperando--;
 
     vagas++;
     printf("Professor %d entrando no estacionamento -- Vagas restantes: %d\n", i, QTD_ESTACIONAMENTO - vagas);
@@ -50,9 +54,9 @@ void *vaga_professor(void *id)
     vagas--;
     if (vagas == QTD_ESTACIONAMENTO - 1){
       printf("Liberado vagas, acordando geral...\n");
-      pthread_cond_broadcast(&ca);
-      pthread_cond_broadcast(&cf);
-      pthread_cond_broadcast(&cp);
+      pthread_cond_signal(&cp);
+      pthread_cond_signal(&cf);
+      pthread_cond_signal(&ca);
     }
     printf("Professor %d saindo do estacionamento -- Vagas restantes: %d\n", i, QTD_ESTACIONAMENTO - vagas);
     pthread_mutex_unlock(&turno);
@@ -68,10 +72,12 @@ void *vaga_funcionarios(void *id){
   while(TRUE){
 
     pthread_mutex_lock(&turno);
-    while (vagas == QTD_ESTACIONAMENTO){
+    funcionarios_esperando++;
+    while (vagas == QTD_ESTACIONAMENTO || professores_esperando > 0){
       printf("Estacionamento lotado -- Funcionario %d na fila do estacionamento...\n", i);
       pthread_cond_wait(&cf, &turno);
     }
+    funcionarios_esperando--;
 
     vagas++;
     printf("Funcionario %d entrando do estacionamento -- Vagas restantes: %d\n", i, QTD_ESTACIONAMENTO - vagas);
@@ -83,9 +89,9 @@ void *vaga_funcionarios(void *id){
     vagas--;
     if (vagas == QTD_ESTACIONAMENTO - 1){
       printf("Liberado vagas, acordando geral...\n");
-      pthread_cond_broadcast(&ca);
-      pthread_cond_broadcast(&cf);
-      pthread_cond_broadcast(&cp);
+      pthread_cond_signal(&cp);
+      pthread_cond_signal(&cf);
+      pthread_cond_signal(&ca);
     }
     printf("Funcionario %d saindo no estacionamento -- Vagas restantes: %d\n", i, QTD_ESTACIONAMENTO - vagas);
     pthread_mutex_unlock(&turno);
@@ -101,7 +107,7 @@ void *vaga_alunos(void *id)
   while (TRUE)
   {
     pthread_mutex_lock(&turno);
-    while (vagas == QTD_ESTACIONAMENTO)
+    while (vagas == QTD_ESTACIONAMENTO || professores_esperando > 0 || funcionarios_esperando > 0)
     {
       printf("Estacionamento lotado -- Aluno %d na fila do estacionamento...\n", i);
       pthread_cond_wait(&ca, &turno);
@@ -117,9 +123,9 @@ void *vaga_alunos(void *id)
     vagas--;
     if(vagas == QTD_ESTACIONAMENTO - 1){
       printf("Liberado vagas, acordando geral...\n");
-      pthread_cond_broadcast(&ca);
-      pthread_cond_broadcast(&cf);
-      pthread_cond_broadcast(&cp);
+      pthread_cond_signal(&cp);
+      pthread_cond_signal(&cf);
+      pthread_cond_signal(&ca);
     }
     printf("Aluno %d saindo no estacionamento -- Vagas restantes: %d\n", i, QTD_ESTACIONAMENTO - vagas);
     pthread_mutex_unlock(&turno);
