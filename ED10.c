@@ -45,7 +45,7 @@ void *soma_linhas(void *args){
 int main(){
 	int i, j;
 	pthread_t threads[100];
-	pthread_barrier_init(&barrier, NULL, num_linhas);
+	pthread_barrier_init(&barrier, NULL, m);
 	int *id;
 
 	for (i = 0; i < num_linhas; i++)
